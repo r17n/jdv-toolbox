@@ -54,25 +54,39 @@ def print_timediff(time_1, time_2):
     print( format_timediff(get_timediff(dt_time_1, dt_time_2)) )
     print("\n")
 
+#Grabs the start time and groups into timestamp, date, hours, minutes, total seconds, whole seconds, fractional seconds
+#Groups requestID in order to match start and end times
+re_start = r"(START USER COMMAND:\tstartTime=((\d{4}-\d{2}-\d{2}) ((\d+):(\d+):((\d+).(\d+)))))\srequestID=(.{12}\.\d+)"
+re_end   = r"(END USER COMMAND:\tendTime=((\d{4}-\d{2}-\d{2}) ((\d+):(\d+):((\d+).(\d+)))))\srequestID=(.{12}\.\d+)"
 
-start_end = [None,None]
-print("\n")
-print("\n")
-for line in log:
-        fields = re.split(r'\t+', line)
+#Dictionary to keep all the matches found based on request id
+request_dict = {}
+log_lines = log.read()
 
-        #TODO: Let's find a better way to do this
-        if len(fields) > 2:
-            #Only interested in INFO
-            if 'INFO' in fields[0]:
-                    print(fields[2])
-                    if start_end[0] is None:
-                        start_end[0] = get_value_from_key_value_pair(fields[2])
-                    elif start_end[1] is None:
-                        start_end[1] = get_value_from_key_value_pair(fields[2])
-                        print_timediff(start_end[0], start_end[1])
-                        start_end = [None, None]
-                    else:
-                        start_end[0] = get_value_from_key_value_pair(fields[2])
-                        start_end[1] = None
-log.close()
+matches_re_start = re.findall(re_start, log_lines)
+
+#Add requestID as key, and create a list with the match as first element to value
+for match in matches_re_start:
+    if match[-1] in request_dict:
+        print "Duplicate Request ID Found: ", match[-1]
+    if match[-1] not in request_dict:
+        request_dict[match[-1]] = [match]
+
+matches_re_end = re.findall(re_end, log_lines)
+
+for match in matches_re_end:
+    if match[-1] in request_dict:
+        if len(request_dict[match[-1]]) >= 2:
+            print "Request ID: ", match[-1], "already has a start/end pair: "
+            print request_dict[match[-1]]
+        else:
+            request_dict[match[-1]].append(match)
+
+print("\n\n")
+
+for req in request_dict.keys():
+    start_ts = request_dict[req][0][1]
+    end_ts   = request_dict[req][1][1]
+    print "startTime=", start_ts
+    print "endTime  =", end_ts
+    print_timediff( start_ts, end_ts )
