@@ -1,0 +1,9 @@
+The first version is very constrained:
+
+1. Must be run from EAP_HOME/bin
+2. Must be using standalone.xml
+3. Copies all vdb deployments with a SHA to current directory with existing vdb name. 
+
+The tweaks are easy, I just need to make time for it:)
+
+*Note, if vdbs are file deployed/don't have a SHA, the script will output nothing
