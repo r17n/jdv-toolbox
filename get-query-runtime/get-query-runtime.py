@@ -1,12 +1,9 @@
-# This is a work-in-progress. Need to refactor and add functionality
-
 import re, sys
 from datetime import datetime, date, time
 
 log_file = 'teiid-command.log'
 if len( sys.argv ) > 1:
     log_file = sys.argv[1]
-
 
 log = open(log_file)
 
@@ -54,11 +51,6 @@ def print_timediff(time_1, time_2):
     print( format_timediff(get_timediff(dt_time_1, dt_time_2)) )
     print("\n")
 
-#Grabs the start time and groups into timestamp, date, hours, minutes, total seconds, whole seconds, fractional seconds
-#Groups requestID in order to match start and end times
-#re_start = r"(START USER COMMAND:\tstartTime=((\d{4}-\d{2}-\d{2}) ((\d+):(\d+):((\d+).(\d+)))))\srequestID=(.{12}\.\d+)"
-#re_end   = r"(END USER COMMAND:\tendTime=((\d{4}-\d{2}-\d{2}) ((\d+):(\d+):((\d+).(\d+)))))\srequestID=(.{12}\.\d+)"
-
 #Grabs (SOURCE SRC COMMAND: endTime=(YYYY-MM-DD) (HH:MM:SS.FFF)[1] executionID=(######)[2] modelName=(NAME)[3] sourceCommand=(SQL)[4])[0]
 re_src_cmd =        r"(SOURCE SRC COMMAND:\sendTime=(\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}:\d{2}\.\d+).*executionID=(\d+).*modelName=([^\s]*).*sourceCommand=\[(.*)\])"
 
@@ -98,18 +90,15 @@ for match in matches_re_end_src_cmd:
 
     exec_dict[match[2]]['endTime'] = match[1]
 
-
 for exec_id in exec_dict:
-    #print exec_dict[exec_id]
-    print "executionID =", exec_id
-    print "modelName =", exec_dict[exec_id]['modelName']
-    print("\n")
+    #print "executionID =", exec_id
     print "sourceQuery ="
     print exec_dict[exec_id]['sourceCommand']
     print("\n")
     print "pushDownQuery ="
     print exec_dict[exec_id]['pushDownQuery']
     print("\n")
+    print "modelName =", exec_dict[exec_id]['modelName']
     start_ts = exec_dict[exec_id]['startTime']
     end_ts   = exec_dict[exec_id]['endTime']
     print "startTime=", start_ts
