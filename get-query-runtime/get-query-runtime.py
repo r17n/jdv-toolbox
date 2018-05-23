@@ -56,37 +56,63 @@ def print_timediff(time_1, time_2):
 
 #Grabs the start time and groups into timestamp, date, hours, minutes, total seconds, whole seconds, fractional seconds
 #Groups requestID in order to match start and end times
-re_start = r"(START USER COMMAND:\tstartTime=((\d{4}-\d{2}-\d{2}) ((\d+):(\d+):((\d+).(\d+)))))\srequestID=(.{12}\.\d+)"
-re_end   = r"(END USER COMMAND:\tendTime=((\d{4}-\d{2}-\d{2}) ((\d+):(\d+):((\d+).(\d+)))))\srequestID=(.{12}\.\d+)"
+#re_start = r"(START USER COMMAND:\tstartTime=((\d{4}-\d{2}-\d{2}) ((\d+):(\d+):((\d+).(\d+)))))\srequestID=(.{12}\.\d+)"
+#re_end   = r"(END USER COMMAND:\tendTime=((\d{4}-\d{2}-\d{2}) ((\d+):(\d+):((\d+).(\d+)))))\srequestID=(.{12}\.\d+)"
 
-#Dictionary to keep all the matches found based on request id
-request_dict = {}
+#Grabs (SOURCE SRC COMMAND: endTime=(YYYY-MM-DD) (HH:MM:SS.FFF)[1] executionID=(######)[2] modelName=(NAME)[3] sourceCommand=(SQL)[4])[0]
+re_src_cmd =        r"(SOURCE SRC COMMAND:\sendTime=(\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}:\d{2}\.\d+).*executionID=(\d+).*modelName=([^\s]*).*sourceCommand=\[(.*)\])"
+
+# Grabs (SOURCE SRC COMMAND: startTime=(YYYY-MM-DD) (HH:MM:SS.FFF)[1] executionID=(######)[2] sql=(SQL)[3])[0]
+re_start_src_cmd =  r"(START DATA SRC COMMAND:\sstartTime=(\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}:\d{2}\.\d+).*executionID=(\d+).*sql=(.*))"
+
+#Grabs (SOURCE SRC COMMAND: endTime=(YYYY-MM-DD) (HH:MM:SS.FFF)[1] executionID=(######)[2])[0]
+re_end_src_cmd =    r"(END SRC COMMAND:\sendTime=(\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}:\d{2}\.\d+).*executionID=(\d+))"
+
+#Dictionary to keep all the matches found based on executionID
+exec_dict = dict()
 log_lines = log.read()
 
-matches_re_start = re.findall(re_start, log_lines)
+matches_re_src_cmd = re.findall(re_src_cmd, log_lines)
 
-#Add requestID as key, and create a list with the match as first element to value
-for match in matches_re_start:
-    if match[-1] in request_dict:
-        print "Duplicate Request ID Found: ", match[-1]
-    if match[-1] not in request_dict:
-        request_dict[match[-1]] = [match]
+for match in matches_re_src_cmd:
+    if match[2] not in exec_dict:
+        exec_dict[match[2]] = dict()
 
-matches_re_end = re.findall(re_end, log_lines)
+    exec_dict[match[2]]['modelName'] = match[3]
+    exec_dict[match[2]]['sourceCommand'] = match[4]
 
-for match in matches_re_end:
-    if match[-1] in request_dict:
-        if len(request_dict[match[-1]]) >= 2:
-            print "Request ID: ", match[-1], "already has a start/end pair: "
-            print request_dict[match[-1]]
-        else:
-            request_dict[match[-1]].append(match)
+matches_re_start_src_cmd = re.findall(re_start_src_cmd, log_lines)
 
-print("\n\n")
+for match in matches_re_start_src_cmd:
+    if match[2] not in exec_dict:
+        exec_dict[match[2]] = dict()
 
-for req in request_dict.keys():
-    start_ts = request_dict[req][0][1]
-    end_ts   = request_dict[req][1][1]
+    exec_dict[match[2]]['startTime'] = match[1]
+    exec_dict[match[2]]['pushDownQuery'] = match[3]
+
+matches_re_end_src_cmd = re.findall(re_end_src_cmd, log_lines)
+
+for match in matches_re_end_src_cmd:
+    if match[2] not in exec_dict:
+        exec_dict[match[2]] = dict()
+
+    exec_dict[match[2]]['endTime'] = match[1]
+
+
+for exec_id in exec_dict:
+    #print exec_dict[exec_id]
+    print "executionID =", exec_id
+    print "modelName =", exec_dict[exec_id]['modelName']
+    print("\n")
+    print "sourceQuery ="
+    print exec_dict[exec_id]['sourceCommand']
+    print("\n")
+    print "pushDownQuery ="
+    print exec_dict[exec_id]['pushDownQuery']
+    print("\n")
+    start_ts = exec_dict[exec_id]['startTime']
+    end_ts   = exec_dict[exec_id]['endTime']
     print "startTime=", start_ts
     print "endTime  =", end_ts
     print_timediff( start_ts, end_ts )
+    print "==============================="
