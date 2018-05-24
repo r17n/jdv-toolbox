@@ -1,5 +1,6 @@
 import re, sys
 from datetime import datetime, date, time
+from collections import OrderedDict
 
 log_file = 'teiid-command.log'
 if len( sys.argv ) > 1:
@@ -43,13 +44,13 @@ def get_timediff(time_1, time_2):
     return [d.days, d.seconds, d.microseconds%1000]
 
 def format_timediff(timediff):
-    return str(timediff[0]) + " days " + str(timediff[1] + timediff[2]*0.001) + " seconds"
+    #return str(timediff[0]) + " days " + str(timediff[1] + timediff[2]*0.001) + " seconds"
+    return str(str(timediff[1] + timediff[2]*0.001) + " seconds")
 
 def print_timediff(time_1, time_2):
     dt_time_1 = get_datetime_from_teiid_timestamp(time_1)
     dt_time_2 = get_datetime_from_teiid_timestamp(time_2)
     print( format_timediff(get_timediff(dt_time_1, dt_time_2)) )
-    print("\n")
 
 #Grabs (SOURCE SRC COMMAND: endTime=(YYYY-MM-DD) (HH:MM:SS.FFF)[1] executionID=(######)[2] modelName=(NAME)[3] sourceCommand=(SQL)[4])[0]
 re_src_cmd =        r"(SOURCE SRC COMMAND:\sendTime=(\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}:\d{2}\.\d+).*executionID=(\d+).*modelName=([^\s]*).*sourceCommand=\[(.*)\])"
@@ -61,14 +62,14 @@ re_start_src_cmd =  r"(START DATA SRC COMMAND:\sstartTime=(\d{4}-\d{2}-\d{2}\s\d
 re_end_src_cmd =    r"(END SRC COMMAND:\sendTime=(\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}:\d{2}\.\d+).*executionID=(\d+))"
 
 #Dictionary to keep all the matches found based on executionID
-exec_dict = dict()
+exec_dict = OrderedDict()
 log_lines = log.read()
 
 matches_re_src_cmd = re.findall(re_src_cmd, log_lines)
 
 for match in matches_re_src_cmd:
     if match[2] not in exec_dict:
-        exec_dict[match[2]] = dict()
+        exec_dict[match[2]] = OrderedDict()
 
     exec_dict[match[2]]['modelName'] = match[3]
     exec_dict[match[2]]['sourceCommand'] = match[4]
@@ -77,7 +78,7 @@ matches_re_start_src_cmd = re.findall(re_start_src_cmd, log_lines)
 
 for match in matches_re_start_src_cmd:
     if match[2] not in exec_dict:
-        exec_dict[match[2]] = dict()
+        exec_dict[match[2]] = OrderedDict()
 
     exec_dict[match[2]]['startTime'] = match[1]
     exec_dict[match[2]]['pushDownQuery'] = match[3]
@@ -86,22 +87,28 @@ matches_re_end_src_cmd = re.findall(re_end_src_cmd, log_lines)
 
 for match in matches_re_end_src_cmd:
     if match[2] not in exec_dict:
-        exec_dict[match[2]] = dict()
+        exec_dict[match[2]] = OrderedDict()
 
     exec_dict[match[2]]['endTime'] = match[1]
 
+
 for exec_id in exec_dict:
-    #print "executionID =", exec_id
-    print "sourceQuery ="
-    print exec_dict[exec_id]['sourceCommand']
-    print("\n")
-    print "pushDownQuery ="
-    print exec_dict[exec_id]['pushDownQuery']
-    print("\n")
-    print "modelName =", exec_dict[exec_id]['modelName']
     start_ts = exec_dict[exec_id]['startTime']
     end_ts   = exec_dict[exec_id]['endTime']
-    print "startTime=", start_ts
-    print "endTime  =", end_ts
+    print "executionID =", exec_id
+    print "start=", start_ts
+    print "end  =", end_ts
     print_timediff( start_ts, end_ts )
+    print("\n")
+    print "modelName =", exec_dict[exec_id]['modelName']
+    print("\n")
+    print "[sourceQuery]"
+    print exec_dict[exec_id]['sourceCommand']
+    print("\n")
+    print "[pushDownQuery]"
+    print exec_dict[exec_id]['pushDownQuery']
+    print("\n")
+
+
+
     print "==============================="
