@@ -58,8 +58,8 @@ re_src_cmd =        r"(SOURCE SRC COMMAND:\sendTime=(\d{4}-\d{2}-\d{2}\s\d{2}:\d
 # Grabs (SOURCE SRC COMMAND: startTime=(YYYY-MM-DD) (HH:MM:SS.FFF)[1] executionID=(######)[2] sql=(SQL)[3])[0]
 re_start_src_cmd =  r"(START DATA SRC COMMAND:\sstartTime=(\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}:\d{2}\.\d+).*executionID=(\d+).*sql=(.*))"
 
-#Grabs (SOURCE SRC COMMAND: endTime=(YYYY-MM-DD) (HH:MM:SS.FFF)[1] executionID=(######)[2])[0]
-re_end_src_cmd =    r"(END SRC COMMAND:\sendTime=(\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}:\d{2}\.\d+).*executionID=(\d+))"
+#Grabs (SOURCE SRC COMMAND: endTime=(YYYY-MM-DD) (HH:MM:SS.FFF)[1] executionID=(######)[2] finalRowCount=(#######)[3])[0]
+re_end_src_cmd =    r"(END SRC COMMAND:\sendTime=(\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}:\d{2}\.\d+).*executionID=(\d+).*finalRowCount=(-?\d+))"
 
 #Dictionary to keep all the matches found based on executionID
 exec_dict = OrderedDict()
@@ -90,6 +90,7 @@ for match in matches_re_end_src_cmd:
         exec_dict[match[2]] = OrderedDict()
 
     exec_dict[match[2]]['endTime'] = match[1]
+    exec_dict[match[3]]['finalRowCount'] = match[3]
 
 
 for exec_id in exec_dict:
@@ -108,7 +109,4 @@ for exec_id in exec_dict:
     print "[pushDownQuery]"
     print exec_dict[exec_id]['pushDownQuery']
     print("\n")
-
-
-
     print "==============================="
