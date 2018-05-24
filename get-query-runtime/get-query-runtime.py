@@ -50,7 +50,7 @@ def format_timediff(timediff):
 def print_timediff(time_1, time_2):
     dt_time_1 = get_datetime_from_teiid_timestamp(time_1)
     dt_time_2 = get_datetime_from_teiid_timestamp(time_2)
-    print( format_timediff(get_timediff(dt_time_1, dt_time_2)) )
+    return format_timediff(get_timediff(dt_time_1, dt_time_2))
 
 #Grabs (SOURCE SRC COMMAND: endTime=(YYYY-MM-DD) (HH:MM:SS.FFF)[1] executionID=(######)[2] modelName=(NAME)[3] sourceCommand=(SQL)[4])[0]
 re_src_cmd =        r"(SOURCE SRC COMMAND:\sendTime=(\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}:\d{2}\.\d+).*executionID=(\d+).*modelName=([^\s]*).*sourceCommand=\[(.*)\])"
@@ -90,18 +90,19 @@ for match in matches_re_end_src_cmd:
         exec_dict[match[2]] = OrderedDict()
 
     exec_dict[match[2]]['endTime'] = match[1]
-    exec_dict[match[3]]['finalRowCount'] = match[3]
+    exec_dict[match[2]]['finalRowCount'] = match[3]
 
 
 for exec_id in exec_dict:
     start_ts = exec_dict[exec_id]['startTime']
     end_ts   = exec_dict[exec_id]['endTime']
-    print "executionID =", exec_id
-    print "start=", start_ts
-    print "end  =", end_ts
-    print_timediff( start_ts, end_ts )
+    print "executionID=   ", exec_id
+    print "finalRowCount= ", exec_dict[exec_id]['finalRowCount']
+    print "start=         ", start_ts
+    print "end=           ", end_ts
+    print "total=         ", print_timediff( start_ts, end_ts )
     print("\n")
-    print "modelName =", exec_dict[exec_id]['modelName']
+    print "modelName=     ", exec_dict[exec_id]['modelName']
     print("\n")
     print "[sourceQuery]"
     print exec_dict[exec_id]['sourceCommand']
