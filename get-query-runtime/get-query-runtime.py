@@ -108,7 +108,4 @@ for exec_id in exec_dict:
     print "[pushDownQuery]"
     print exec_dict[exec_id]['pushDownQuery']
     print("\n")
-
-
-
     print "==============================="
