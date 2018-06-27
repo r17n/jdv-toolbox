@@ -57,6 +57,49 @@ def remove_date(t_stamp):
     if t_stamp and len(t_stamp) >= 11:
         return t_stamp[11:]
 
+def print_stats(q_dict):
+    q_num = 0
+
+    for q in q_dict:
+        times_run_actual = len(q_dict[q])
+        times_run_nonzero = None
+        avg_nonzero = None
+        min_nonzero = None
+        max_nonzero = None
+        nonzero_list = []
+
+        for entry in q_dict[q]:
+            if entry[2] != '0' and entry[2] is not None:
+                nonzero_list.append(entry)
+        
+        times_run_nonzero = len(nonzero_list)
+
+        #Calulate nonzero avg, median, min, max
+        if times_run_nonzero and times_run_nonzero > 0 and nonzero_list[1]:
+            #Optimize: calculate in above loop
+            avg_nonzero = sum( val[1] for val in nonzero_list) / times_run_nonzero if times_run_nonzero and times_run_nonzero > 0 else 'undefined'
+
+            #Calculate Median
+            median_nonzero = nonzero_list[ times_run_nonzero / 2][1]
+            if times_run_nonzero % 2 == 0:
+                median_nonzero = (median_nonzero + float(nonzero_list[ times_run_nonzero / 2 - 1][2])) / 2
+            
+            min_nonzero = min( val[1] for val in nonzero_list )
+            max_nonzero = max( val[1] for val in nonzero_list )
+        
+        print '[{0}{1}]'.format('Query ',q_num)
+        print '{0}'.format(q)
+        print 'Times run: {0} times {1:50} Actual Times run (includes finalRowCount=0 entries): {2} times'.format(times_run_nonzero, '', times_run_actual)
+        print 'Average: {0:10.3f} seconds'.format(avg_nonzero)
+        print 'Median: {0:10.3f} seconds'.format(median_nonzero)
+        print 'Min: {0:10.3f} seconds'.format(min_nonzero)
+        print 'Max: {0:10.3f} seconds'.format(max_nonzero)
+        print '*****************************'
+
+        q_num += 1
+        
+
+
 
 
 q_trusted_scales = 'SELECT g_0."EASY_RETURNS_ID" AS c_0, g_0."EASY_RETURNS_SRC" AS c_1, g_0."MPE_ID" AS c_2, g_0."MPE_TYPE" AS c_3, g_0."EVENT_CODE" AS c_4, g_0."SERIAL_NBR" AS c_5, g_0."SORT_AREA" AS c_6, g_0."CAP_UPC1" AS c_7, g_0."CAP_UPC2" AS c_8, g_0."SCALE_ERROR_CODE" AS c_9, g_0."DEST_ZIP_CODE" AS c_10, g_0."CAP_UPC3" AS c_11, g_0."CAP_UPC4" AS c_12, g_0."RUN_DATETIME" AS c_13, g_0."SCALE_SOFTWARE_VERSION" AS c_14, g_0."SERVICE_TYPE_CODE" AS c_15, g_0."IBI" AS c_16, g_0."IMB" AS c_17, g_0."CAP_DEST_ZIP_CODE" AS c_18, g_0."TRACKING_DATA_SITE" AS c_19, g_0."LENGTH" AS c_20, g_0."KAFKA_TS" AS c_21, g_0."HBASE_TS" AS c_22, g_0."RAW_TS" AS c_23, g_0."IV_TS" AS c_24, g_0."MAILER_ID" AS c_25, g_0."OPER_CODE" AS c_26, g_0."IMPB" AS c_27, g_0."HEIGHT" AS c_28, g_0."SPARK_TS" AS c_29, g_0."PIC" AS c_30, g_0."WIDTH" AS c_31, g_0."CAP_WEIGHT" AS c_32, g_0."CHANNEL_APP_ID" AS c_33, g_0."INDUCT_STATION_NUMBER" AS c_34, g_0."SCAN_DATETIME" AS c_35 FROM "PPC"."PACKAGE_SCANS_T" AS g_0 WHERE g_0."MPE_TYPE" IN (?, ?, ?, ?, ?) AND g_0."HBASE_TS" > ? AND g_0."HBASE_TS" < ? AND g_0."SCAN_DATETIME" > ? AND (g_0."RUN_DATETIME" > ? OR g_0."RUN_DATETIME" IS NULL) ORDER BY c_22'
@@ -246,6 +289,7 @@ print "-----------------"
 print "*******************************"
 print "\n"
 '''
+print_stats(query_dict)
 
 for q in query_dict:
     print q
