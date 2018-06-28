@@ -1,6 +1,7 @@
 import re, sys
 from datetime import datetime, date, time
 from collections import OrderedDict
+from numpy import median, average
 
 log_file = 'teiid-command.log'
 if len( sys.argv ) > 1:
@@ -66,7 +67,10 @@ def print_stats(q_dict):
         avg_nonzero = None
         min_nonzero = None
         max_nonzero = None
+        avg_nonzero_frc = None  #Average finalRowCount
+        median_nonzero_frc = None #Median finalRowCount
         nonzero_list = []
+        nonzero_list_times = [] #List of the total runtimes from 
 
         for entry in q_dict[q]:
             if entry[2] != '0' and entry[2] is not None:
@@ -76,16 +80,24 @@ def print_stats(q_dict):
 
         #Calulate nonzero avg, median, min, max
         if times_run_nonzero and times_run_nonzero > 0 and nonzero_list[1]:
-            #Optimize: calculate in above loop
-            avg_nonzero = sum( val[1] for val in nonzero_list) / times_run_nonzero if times_run_nonzero and times_run_nonzero > 0 else 'undefined'
+
+            #Calculate Average
+            avg_nonzero = average( [x[1] for x in nonzero_list] )
 
             #Calculate Median
-            median_nonzero = nonzero_list[ times_run_nonzero / 2][1]
-            if times_run_nonzero % 2 == 0:
-                median_nonzero = (median_nonzero + float(nonzero_list[ times_run_nonzero / 2 - 1][2])) / 2
-            
+            median_nonzero = median( [x[1] for x in nonzero_list] )
+         
+            #Fastest running query
             min_nonzero = min( val[1] for val in nonzero_list )
+            
+            #Slowest running query
             max_nonzero = max( val[1] for val in nonzero_list )
+
+            #Average finalRowCount
+            avg_nonzero_frc = int(average( [float(x[2]) for x in nonzero_list]))
+
+            #Median finalRowCount
+            median_nonzero_frc = int(median( [float(x[2]) for x in nonzero_list]))
         
         print '[{0}{1}]'.format('Query ',q_num)
         print '{0}'.format(q)
@@ -94,6 +106,8 @@ def print_stats(q_dict):
         print 'Median: {0:10.3f} seconds'.format(median_nonzero)
         print 'Min: {0:10.3f} seconds'.format(min_nonzero)
         print 'Max: {0:10.3f} seconds'.format(max_nonzero)
+        print 'Average finalRowCount: {0} rows'.format(avg_nonzero_frc)
+        print 'Median finalRowCount: {0} rows'.format(median_nonzero_frc)
         print '*****************************'
 
         q_num += 1
